@@ -14,68 +14,72 @@ $(document).ready(function () {
     var database = firebase.database();
 
     //Global Variables
-    var trainName = "";
-    var trainDestination = "";
-    var trainStart = 0;
-    var trainFrequency = 0;
+    var name = "";
+    var destination = "";
+    var start = 0;
+    var frequency = 0;
 
     // Button for adding trains
     $("#add-train-btn").on("click", function (event) {
         event.preventDefault();
 
         // User Input
-        var trainName = $("#train-name-input").val().trim();
-        var trainDestination = $("#destination-input").val().trim();
-        var trainStart = moment($("#time-input").val().trim(), "HH:mm").subtract(1, "years").format("X");
-        var trainFrequency = $("#frequency-input").val().trim();
-
-        // Local Object
-        var newTrain = {
-            name: trainName,
-            destination: trainDestination,
-            start: trainStart,
-            frequency: trainFrequency,
-            timeAdded: firebase.database.ServerValue.TIMESTAMP
-        };
+        var name = $("#train-name-input").val().trim();
+        var destination = $("#destination-input").val().trim();
+        var start = $("#start-input").val().trim();
+        var frequency = $("#frequency-input").val().trim();
 
         // Push data to database
-        database.ref().push(newTrain);
-
-        console.log(newTrain.name);
-        console.log(newTrain.destination);
-        console.log(newTrain.start);
-        console.log(newTrain.frequency);
-    });
-
-    // Function to Capture Next Train Time
-    function nextTrain() {
-        database.ref().child('train-scheduler').once('value', function (snapshot) {
-            snapshot.forEach(function (child_Snapshot) {
-                newTime = moment().format('X');
-                database.ref('train-scheduler' + child_Snapshot.key).update({
-                    trainTime: newTime,
-                })
-            })
+        database.ref().push({
+            name: name,
+            destination: destination,
+            start: start,
+            frequency: frequency,
         });
-    };
 
-    //Set the countdown for next train to run every minute
-    setInterval(nextTrain, 60000);
+        // Alert
+        alert("Train Successfully Added");
 
-    //Add train data to firebase
-    database.ref().orderByChild("dateAdded").on("child_added", function (childSnapshot) {
+        // Clears all of the text-boxes
+        $("#train-name-input").val("");
+        $("#destination-input").val("");
+        $("#start-input").val("");
+        $("#frequency-input").val("");
+    });
+    database.ref().on("child_added", function (childSnapshot) {
 
+        var name = childSnapshot.val().name;
+        var destination = childSnapshot.val().destination;
+        var start = childSnapshot.val().start;
+        var frequency = childSnapshot.val().frequency;
 
+        //Convert start time
+        var startConverted = moment(start, "HH:mm:").subtract(1, "years");
 
-        // // Add each train's data into the table
-        // $("#train-table > tbody").append("<tr><td>" +
-        //     trainName + "</td><td>" +
-        //     trainDestination + "</td><td>" +
-        //     trainFrequency + "</td><td>" +
-        //     nextArrival + "</td><td>" +
-        //     minutesAway + "</td></tr>"
-        //);
+        //Determine Current Time
+        var currentTime = moment().format("HH:mm");
+        console.log(currentTime);
+
+        //Determine difference between current time and trainStart
+        var timeDifference = moment().diff(moment(startConverted), "minutes");
+        console.log(timeDifference);
+
+        //Determine Remaining time
+        var remainder = timeDifference % frequency;
+        var nextTrainMin = frequency - remainder;
+
+        // format next arrival time
+        var nextTrainArrival = moment().add(nextTrainMin, "m").format("HH:mm");
+
+        // Add each train's data into the table
+        $("#train-table > tbody").append("<tr><td>" +
+            name + "</td><td>" +
+            destination + "</td><td>" +
+            frequency + "</td><td>" +
+            nextTrainArrival + "</td><td>" +
+            nextTrainMin + "</td></tr>"
+        );
 
     });
-
 });
+
