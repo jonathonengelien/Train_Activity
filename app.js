@@ -13,6 +13,12 @@ $(document).ready(function () {
 
     var database = firebase.database();
 
+    //Global Variables
+    var trainName = "";
+    var trainDestination = "";
+    var trainStart = 0;
+    var trainFrequency = 0;
+
     // Button for adding trains
     $("#add-train-btn").on("click", function (event) {
         event.preventDefault();
@@ -44,9 +50,9 @@ $(document).ready(function () {
     // Function to Capture Next Train Time
     function nextTrain() {
         database.ref().child('train-scheduler').once('value', function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
+            snapshot.forEach(function (child_Snapshot) {
                 newTime = moment().format('X');
-                database.ref('train-scheduler' + childSnapshot.key).update({
+                database.ref('train-scheduler' + child_Snapshot.key).update({
                     trainTime: newTime,
                 })
             })
@@ -56,14 +62,20 @@ $(document).ready(function () {
     //Set the countdown for next train to run every minute
     setInterval(nextTrain, 60000);
 
+    //Add train data to firebase
+    database.ref().orderByChild("dateAdded").on("child_added", function (childSnapshot) {
 
-    // // Add each train's data into the table
-    // $("#train-table > tbody").append("<tr><td>" +
-    //     trainName + "</td><td>" +
-    //     trainDestination + "</td><td>" +
-    //     trainFrequency + "</td><td>" +
-    //     nextArrival + "</td><td>" +
-    //     minutesAway + "</td></tr>"
-    //);
+
+
+        // // Add each train's data into the table
+        // $("#train-table > tbody").append("<tr><td>" +
+        //     trainName + "</td><td>" +
+        //     trainDestination + "</td><td>" +
+        //     trainFrequency + "</td><td>" +
+        //     nextArrival + "</td><td>" +
+        //     minutesAway + "</td></tr>"
+        //);
+
+    });
 
 });
